@@ -26,8 +26,10 @@ RELEVANT CODE (>> marks the exact line that raised the error):
 {history_section}
 Diagnose the root cause of this error and suggest a fix. If recent commits are shown above and seem relevant to the error, mention that connection in your root cause explanation.
 
+Also assess severity: "critical" (crashes the app / data loss / security), "high" (breaks a feature), "medium" (degraded behavior), or "low" (cosmetic/minor).
+
 Respond ONLY with valid JSON, no other text, in this exact format:
-{{"root_cause": "one or two sentence explanation", "suggested_fix": "concrete fix suggestion, can include a short code snippet", "confidence": "high, medium, or low"}}
+{{"root_cause": "one or two sentence explanation", "suggested_fix": "concrete fix suggestion, can include a short code snippet", "confidence": "high, medium, or low", "severity": "critical, high, medium, or low"}}
 """
 
     response = client.chat.completions.create(
