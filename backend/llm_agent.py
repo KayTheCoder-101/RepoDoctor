@@ -53,6 +53,55 @@ Respond ONLY with valid JSON, no other text, in this exact format:
             "confidence": "low"
         }
 
+def correlate_errors(results: list[dict]) -> dict:
+    """
+    Given a list of already-diagnosed errors, ask the LLM to identify
+    which ones likely share a root cause.
+    Returns: {"groups": [{"error_indices": [0, 2], "shared_cause": "explanation"}], "summary": "..."}
+    If there's only one error or no correlation, returns an empty groups list.
+    """
+    if len(results) < 2:
+        return {"groups": [], "summary": ""}
+
+    error_list_text = "\n".join(
+        f"[{i}] {r['error_type']} in {r['file']}:{r['line_number']} — {r['message']} "
+        f"(root cause: {r.get('root_cause', 'N/A')})"
+        for i, r in enumerate(results)
+    )
+
+    prompt = f"""You are a senior software engineer reviewing a batch of diagnosed errors from the same application run.
+
+ERRORS FOUND:
+{error_list_text}
+
+Identify any errors that likely share the SAME underlying root cause (e.g., one bug causing multiple downstream failures). Only group errors if you're genuinely confident they're connected — don't force groupings.
+
+Respond ONLY with valid JSON, no other text, in this exact format:
+{{"groups": [{{"error_indices": [0, 2], "shared_cause": "one sentence explaining the shared root cause"}}], "summary": "one sentence overall summary of the error batch, or empty string if errors are unrelated"}}
+
+If no errors are related, return {{"groups": [], "summary": ""}}.
+"""
+
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        max_tokens=400,
+        messages=[{"role": "user", "content": prompt}]
+    )
+
+    text = response.choices[0].message.content.strip()
+
+    if text.startswith("```"):
+        text = text.split("```")[1]
+        if text.startswith("json"):
+            text = text[4:]
+        text = text.strip()
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return {"groups": [], "summary": ""}
+
+
 if __name__ == "__main__":
     sample_error = {
         "error_type": "ZeroDivisionError",

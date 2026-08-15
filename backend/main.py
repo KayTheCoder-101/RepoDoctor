@@ -1,11 +1,10 @@
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.repo_handler import clone_repo, cleanup_repo
+from backend.repo_handler import clone_repo, cleanup_repo, get_file_history
 from backend.log_parser import extract_errors
 from backend.code_matcher import get_code_context
-from backend.llm_agent import diagnose
-from backend.repo_handler import clone_repo, cleanup_repo, get_file_history
+from backend.llm_agent import diagnose, correlate_errors
 
 app = FastAPI(title="RepoDoctor")
 
@@ -58,7 +57,9 @@ async def diagnose_endpoint(
     finally:
         cleanup_repo(repo_path)
 
-    return {"results": results}
+    correlation = correlate_errors(results)
+
+    return {"results": results, "correlation": correlation}
 
 
 @app.get("/")
