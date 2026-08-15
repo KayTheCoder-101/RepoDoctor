@@ -39,6 +39,21 @@ if submitted:
                     confidence_color = {"high": "🟢", "medium": "🟡", "low": "🔴"}.get(r.get("confidence", "low"), "⚪")
 
                     with st.expander(f"{confidence_color} {r['error_type']} — {r['file']}:{r['line_number']}"):
+                        code_snippet = r.get("code_snippet", "")
+                        file_not_found = "[Could not find file" in code_snippet
+
+                        if file_not_found:
+                            st.warning(
+                                "⚠️ Could not locate the source file in the repo. "
+                                "This diagnosis is based on the error message alone and may be inaccurate. "
+                                "Treat it as a starting hypothesis, not a confirmed root cause."
+                            )
+                        elif r.get("confidence") == "low":
+                            st.info(
+                                "ℹ️ The AI marked this diagnosis as low-confidence — "
+                                "worth double-checking manually before applying the fix."
+                            )
+
                         st.markdown(f"**Message:** {r['message']}")
                         st.markdown(f"**Function:** `{r.get('function', 'unknown')}`")
 
@@ -49,4 +64,4 @@ if submitted:
                         st.write(r.get("suggested_fix", "N/A"))
 
                         st.markdown("**Code Context:**")
-                        st.code(r.get("code_snippet", ""), language="python")
+                        st.code(code_snippet, language="python")
