@@ -5,6 +5,7 @@ from backend.repo_handler import clone_repo, cleanup_repo
 from backend.log_parser import extract_errors
 from backend.code_matcher import get_code_context
 from backend.llm_agent import diagnose
+from backend.repo_handler import clone_repo, cleanup_repo, get_file_history
 
 app = FastAPI(title="RepoDoctor")
 
@@ -40,7 +41,8 @@ async def diagnose_endpoint(
     try:
         for error in errors:
             code_snippet = get_code_context(repo_path, error["file"], error["line_number"])
-            diagnosis = diagnose(error, code_snippet)
+            file_history = get_file_history(repo_path, error["file"], error["line_number"])
+            diagnosis = diagnose(error, code_snippet, file_history)
 
             results.append({
                 "error_type": error["error_type"],

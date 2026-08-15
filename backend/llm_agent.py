@@ -5,11 +5,13 @@ from openai import OpenAI
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 
-def diagnose(error: dict, code_snippet: str) -> dict:
+def diagnose(error: dict, code_snippet: str, file_history: str = "") -> dict:
     """
-    Given a structured error and its code context, ask the LLM to diagnose it.
+    Given a structured error, its code context, and optional git history, ask the LLM to diagnose it.
     Returns: {root_cause, suggested_fix, confidence}
     """
+    history_section = f"\n{file_history}\n" if file_history else ""
+
     prompt = f"""You are a senior software engineer debugging a codebase.
 
 ERROR TYPE: {error['error_type']}
@@ -21,8 +23,8 @@ STACK TRACE:
 
 RELEVANT CODE (>> marks the exact line that raised the error):
 {code_snippet}
-
-Diagnose the root cause of this error and suggest a fix.
+{history_section}
+Diagnose the root cause of this error and suggest a fix. If recent commits are shown above and seem relevant to the error, mention that connection in your root cause explanation.
 
 Respond ONLY with valid JSON, no other text, in this exact format:
 {{"root_cause": "one or two sentence explanation", "suggested_fix": "concrete fix suggestion, can include a short code snippet", "confidence": "high, medium, or low"}}
@@ -50,7 +52,6 @@ Respond ONLY with valid JSON, no other text, in this exact format:
             "suggested_fix": text,
             "confidence": "low"
         }
-
 
 if __name__ == "__main__":
     sample_error = {

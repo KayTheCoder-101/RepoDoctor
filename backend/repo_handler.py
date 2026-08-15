@@ -24,6 +24,28 @@ def cleanup_repo(local_path: str):
     """Delete the cloned repo directory."""
     shutil.rmtree(local_path, ignore_errors=True)
 
+def get_file_history(repo_path: str, file: str, line: int, max_commits: int = 3) -> str:
+    """
+    Get recent commit history for the specific file, focused on the area around `line`.
+    Returns a summary string of recent changes, or empty string if none found.
+    """
+    try:
+        repo = git.Repo(repo_path)
+        commits = list(repo.iter_commits(paths=file, max_count=max_commits))
+
+        if not commits:
+            return ""
+
+        history_parts = []
+        for commit in commits:
+            history_parts.append(
+                f"- {commit.hexsha[:7]} ({commit.committed_datetime.strftime('%Y-%m-%d')}): {commit.summary}"
+            )
+
+        return "Recent commits touching this file:\n" + "\n".join(history_parts)
+
+    except Exception as e:
+        return ""
 
 if __name__ == "__main__":
     # quick manual test — clone a small public repo
