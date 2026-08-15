@@ -470,52 +470,49 @@ if data:
         file_counts = Counter(r["file"] for r in results)
         if file_counts:
             top_file, top_count = file_counts.most_common(1)[0]
-            st.markdown('<div class="rd-card">', unsafe_allow_html=True)
-            st.markdown('<div class="rd-card-title">Most affected file</div>', unsafe_allow_html=True)
-            st.markdown(
-                f'<div class="rd-file-card">'
-                f'<span class="rd-file-path">📄 {top_file}</span>'
-                f'<span class="rd-file-count">{top_count} error(s)</span>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown('<div class="rd-card-title">Most affected file</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="rd-file-card">'
+                    f'<span class="rd-file-path">📄 {top_file}</span>'
+                    f'<span class="rd-file-count">{top_count} error(s)</span>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
 
         # Error distribution
         type_counts = Counter(r["error_type"] for r in results)
         max_count = max(type_counts.values()) if type_counts else 1
-        st.markdown('<div class="rd-card">', unsafe_allow_html=True)
-        st.markdown('<div class="rd-card-title">Error distribution</div>', unsafe_allow_html=True)
-        for error_type, count in type_counts.most_common():
-            pct = int((count / max_count) * 100)
-            st.markdown(
-                f'<div class="rd-dist-row">'
-                f'<span class="rd-dist-label">{error_type}</span>'
-                f'<span class="rd-dist-bar-bg"><span class="rd-dist-bar" style="width:{pct}%; background-color:#4C7EF3;"></span></span>'
-                f'<span class="rd-dist-count">{count}</span>'
-                f'</div>',
-                unsafe_allow_html=True
-            )
-        st.markdown('</div>', unsafe_allow_html=True)
+        with st.container(border=True):
+            st.markdown('<div class="rd-card-title">Error distribution</div>', unsafe_allow_html=True)
+            for error_type, count in type_counts.most_common():
+                pct = int((count / max_count) * 100)
+                st.markdown(
+                    f'<div class="rd-dist-row">'
+                    f'<span class="rd-dist-label">{error_type}</span>'
+                    f'<span class="rd-dist-bar-bg"><span class="rd-dist-bar" style="width:{pct}%; background-color:#4C7EF3;"></span></span>'
+                    f'<span class="rd-dist-count">{count}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
 
         # Correlation
         correlation = data.get("correlation", {}) or {}
         groups = correlation.get("groups", [])
         summary = correlation.get("summary", "")
         if summary or groups:
-            st.markdown('<div class="rd-card">', unsafe_allow_html=True)
-            st.markdown('<div class="rd-card-title">🔗 Related errors</div>', unsafe_allow_html=True)
-            if summary:
-                st.write(summary)
-            for group in groups:
-                indices = group.get("error_indices", [])
-                shared_cause = group.get("shared_cause", "")
-                labels = [
-                    f"{results[i]['error_type']} ({results[i]['file']}:{results[i]['line_number']})"
-                    for i in indices if i < len(results)
-                ]
-                st.info(f"**{' + '.join(labels)}**\n\n{shared_cause}")
-            st.markdown('</div>', unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown('<div class="rd-card-title">🔗 Related errors</div>', unsafe_allow_html=True)
+                if summary:
+                    st.write(summary)
+                for group in groups:
+                    indices = group.get("error_indices", [])
+                    shared_cause = group.get("shared_cause", "")
+                    labels = [
+                        f"{results[i]['error_type']} ({results[i]['file']}:{results[i]['line_number']})"
+                        for i in indices if i < len(results)
+                    ]
+                    st.info(f"**{' + '.join(labels)}**\n\n{shared_cause}")
 
         # ---------------- Detected issues ----------------
         st.markdown('<div class="rd-card-title" style="margin-top:8px;">Detected issues</div>', unsafe_allow_html=True)
