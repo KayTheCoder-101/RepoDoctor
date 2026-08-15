@@ -28,8 +28,10 @@ Diagnose the root cause of this error and suggest a fix. If recent commits are s
 
 Also assess severity: "critical" (crashes the app / data loss / security), "high" (breaks a feature), "medium" (degraded behavior), or "low" (cosmetic/minor).
 
+Also provide a "fixed_line" — just the single corrected version of the exact line that raised the error (marked with >> above), as a plain code string, no markdown formatting. If you can't confidently produce a one-line fix, set it to an empty string.
+
 Respond ONLY with valid JSON, no other text, in this exact format:
-{{"root_cause": "one or two sentence explanation", "suggested_fix": "concrete fix suggestion, can include a short code snippet", "confidence": "high, medium, or low", "severity": "critical, high, medium, or low"}}
+{{"root_cause": "one or two sentence explanation", "suggested_fix": "concrete fix suggestion, can include a short code snippet", "confidence": "high, medium, or low", "severity": "critical, high, medium, or low", "fixed_line": "corrected code line or empty string"}}
 """
 
     response = client.chat.completions.create(

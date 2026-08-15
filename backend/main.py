@@ -61,6 +61,7 @@ async def diagnose_endpoint(
                 "suggested_fix": diagnosis.get("suggested_fix"),
                 "confidence": diagnosis.get("confidence"),
                 "severity": diagnosis.get("severity", "medium"),
+                "fixed_line": diagnosis.get("fixed_line", ""),
             })
     finally:
         cleanup_repo(repo_path)

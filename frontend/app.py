@@ -58,6 +58,26 @@ if submitted:
                 st.divider()
                 # --- End summary dashboard ---
 
+                # --- Correlation display ---
+                correlation = data.get("correlation", {})
+                groups = correlation.get("groups", [])
+                summary = correlation.get("summary", "")
+
+                if summary or groups:
+                    st.subheader("🔗 Related Errors")
+                    if summary:
+                        st.write(summary)
+                    for group in groups:
+                        indices = group.get("error_indices", [])
+                        shared_cause = group.get("shared_cause", "")
+                        error_labels = [
+                            f"{results[i]['error_type']} ({results[i]['file']}:{results[i]['line_number']})"
+                            for i in indices if i < len(results)
+                        ]
+                        st.info(f"**{' + '.join(error_labels)}**\n\n{shared_cause}")
+                    st.divider()
+                # --- End correlation display ---
+
                 for i, r in enumerate(results, 1):
                     confidence_color = {"high": "🟢", "medium": "🟡", "low": "🔴"}.get(r.get("confidence", "low"), "⚪")
                     severity_badge = {"critical": "🔥 CRITICAL", "high": "⚠️ HIGH", "medium": "◐ MEDIUM", "low": "○ LOW"}.get(r.get("severity", "medium"), "◐ MEDIUM")
@@ -89,3 +109,14 @@ if submitted:
 
                         st.markdown("**Code Context:**")
                         st.code(code_snippet, language="python")
+
+                        fixed_line = r.get("fixed_line", "")
+                        if fixed_line:
+                            st.markdown("**Suggested Line Fix:**")
+                            diff_col1, diff_col2 = st.columns(2)
+                            with diff_col1:
+                                st.caption("Before")
+                                st.code(f"- ...", language="diff")
+                            with diff_col2:
+                                st.caption("After")
+                                st.code(f"+ {fixed_line}", language="diff")
