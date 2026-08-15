@@ -1,6 +1,14 @@
 import streamlit as st
-import requests
 from collections import Counter
+import sys
+import os
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from backend.repo_handler import clone_repo, cleanup_repo, get_file_history
+from backend.log_parser import extract_errors, extract_generic_errors
+from backend.code_matcher import get_code_context
+from backend.llm_agent import diagnose, correlate_errors
 
 st.set_page_config(page_title="RepoDoctor", page_icon="🩺", layout="wide")
 
@@ -402,14 +410,47 @@ if submitted:
             st.write("Investigating root causes")
             st.write("Generating fixes")
             try:
-                response = requests.post(
-                    "http://127.0.0.1:8000/diagnose",
-                    data={"repo_url": repo_url},
-                    files={"log_file": (log_file.name, log_file.getvalue())},
-                    timeout=120
-                )
-                response.raise_for_status()
-                data = response.json()
+                log_text = log_file.getvalue().decode("utf-8", errors="ignore")
+
+                errors = extract_errors(log_text)
+                generic_errors = extract_generic_errors(log_text)
+                errors = errors + generic_errors
+
+                if not errors:
+                    data = {"results": [], "message": "No errors found in log."}
+                else:
+                    repo_path = clone_repo(repo_url)
+                    results = []
+                    try:
+                        for error in errors:
+                            if error.get("file") and error.get("line_number"):
+                                code_snippet = get_code_context(repo_path, error["file"], error["line_number"])
+                                file_history = get_file_history(repo_path, error["file"], error["line_number"])
+                            else:
+                                code_snippet = "[No source location available for this error]"
+                                file_history = ""
+
+                            diagnosis = diagnose(error, code_snippet, file_history)
+
+                            results.append({
+                                "error_type": error["error_type"],
+                                "message": error["message"],
+                                "file": error.get("file") or "unknown",
+                                "line_number": error.get("line_number") or 0,
+                                "function": error.get("function"),
+                                "code_snippet": code_snippet,
+                                "root_cause": diagnosis.get("root_cause"),
+                                "suggested_fix": diagnosis.get("suggested_fix"),
+                                "confidence": diagnosis.get("confidence"),
+                                "severity": diagnosis.get("severity", "medium"),
+                                "fixed_line": diagnosis.get("fixed_line", ""),
+                            })
+                    finally:
+                        cleanup_repo(repo_path)
+
+                    correlation = correlate_errors(results)
+                    data = {"results": results, "correlation": correlation}
+
                 status.update(label="Diagnosis complete", state="complete", expanded=False)
             except Exception as e:
                 error_occurred = True
