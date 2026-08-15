@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+from collections import Counter
 
 st.set_page_config(page_title="RepoDoctor", page_icon="🩺", layout="wide")
 
@@ -35,6 +36,28 @@ if submitted:
                 st.info(data.get("message", "No errors found."))
             else:
                 st.success(f"Found {len(results)} error(s).")
+
+                # --- Summary dashboard ---
+                type_counts = Counter(r["error_type"] for r in results)
+                file_counts = Counter(r["file"] for r in results)
+                most_affected_file = file_counts.most_common(1)[0] if file_counts else (None, 0)
+
+                col1, col2, col3 = st.columns(3)
+                col1.metric("Total Errors", len(results))
+                col2.metric("Unique Error Types", len(type_counts))
+                col3.metric(
+                    "Most Affected File",
+                    most_affected_file[0] if most_affected_file[0] else "N/A",
+                    f"{most_affected_file[1]} error(s)" if most_affected_file[0] else ""
+                )
+
+                with st.expander("📊 Error type breakdown"):
+                    for error_type, count in type_counts.most_common():
+                        st.write(f"**{error_type}**: {count}")
+
+                st.divider()
+                # --- End summary dashboard ---
+
                 for i, r in enumerate(results, 1):
                     confidence_color = {"high": "🟢", "medium": "🟡", "low": "🔴"}.get(r.get("confidence", "low"), "⚪")
 
