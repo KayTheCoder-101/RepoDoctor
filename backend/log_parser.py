@@ -36,6 +36,40 @@ def extract_errors(log_text: str) -> list[dict]:
     return errors
 
 
+def extract_generic_errors(log_text: str) -> list[dict]:
+    """
+    Parse generic single-line error logs, e.g.:
+    2026-08-15 14:32:01 ERROR [module.name] Something went wrong: connection refused
+
+    Returns errors in the same shape as extract_errors, but file/line_number
+    will be None since generic logs don't include source location.
+    """
+    errors = []
+
+    pattern = re.compile(
+        r'^.*?\b(ERROR|CRITICAL|FATAL)\b.*?[:\-]\s*(.+)$',
+        re.IGNORECASE | re.MULTILINE
+    )
+
+    for match in pattern.finditer(log_text):
+        level = match.group(1).upper()
+        message = match.group(2).strip()
+
+        if not message:
+            continue
+
+        errors.append({
+            "error_type": level,
+            "message": message,
+            "file": None,
+            "line_number": None,
+            "function": None,
+            "raw_trace": match.group(0).strip()
+        })
+
+    return errors
+
+
 if __name__ == "__main__":
     sample_log = '''
 Traceback (most recent call last):
@@ -48,3 +82,6 @@ ZeroDivisionError: division by zero
     result = extract_errors(sample_log)
     import json
     print(json.dumps(result, indent=2))
+
+    generic_log = "2026-08-15 14:32:01 ERROR [module.name] Something went wrong: connection refused"
+    print(json.dumps(extract_generic_errors(generic_log), indent=2))
