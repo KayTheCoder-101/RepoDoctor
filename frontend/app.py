@@ -60,8 +60,9 @@ if submitted:
 
                 for i, r in enumerate(results, 1):
                     confidence_color = {"high": "🟢", "medium": "🟡", "low": "🔴"}.get(r.get("confidence", "low"), "⚪")
+                    severity_badge = {"critical": "🔥 CRITICAL", "high": "⚠️ HIGH", "medium": "◐ MEDIUM", "low": "○ LOW"}.get(r.get("severity", "medium"), "◐ MEDIUM")
 
-                    with st.expander(f"{confidence_color} {r['error_type']} — {r['file']}:{r['line_number']}"):
+                    with st.expander(f"{confidence_color} [{severity_badge}] {r['error_type']} — {r['file']}:{r['line_number']}"):
                         code_snippet = r.get("code_snippet", "")
                         file_not_found = "[Could not find file" in code_snippet
 

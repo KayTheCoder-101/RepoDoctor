@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "backend/llm_agent.py", line 33, in diagnose
+    response = client.chat.completions.create(
+KeyError: 'choices'
+
+Traceback (most recent call last):
+  File "backend/repo_handler.py", line 12, in clone_repo
+    git.Repo.clone_from(github_url, temp_dir)
+ValueError: Failed to clone repo
+
+2026-08-15 14:32:01 ERROR [network] Connection timeout while reaching OpenAI API

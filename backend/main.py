@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.repo_handler import clone_repo, cleanup_repo, get_file_history
-from backend.log_parser import extract_errors
+from backend.log_parser import extract_errors, extract_generic_errors
 from backend.code_matcher import get_code_context
 from backend.llm_agent import diagnose, correlate_errors
 
@@ -30,6 +30,8 @@ async def diagnose_endpoint(
     log_text = log_bytes.decode("utf-8", errors="ignore")
 
     errors = extract_errors(log_text)
+    generic_errors = extract_generic_errors(log_text)
+    errors = errors + generic_errors
 
     if not errors:
         return {"results": [], "message": "No errors found in log."}
@@ -39,15 +41,20 @@ async def diagnose_endpoint(
     results = []
     try:
         for error in errors:
-            code_snippet = get_code_context(repo_path, error["file"], error["line_number"])
-            file_history = get_file_history(repo_path, error["file"], error["line_number"])
+            if error.get("file") and error.get("line_number"):
+                code_snippet = get_code_context(repo_path, error["file"], error["line_number"])
+                file_history = get_file_history(repo_path, error["file"], error["line_number"])
+            else:
+                code_snippet = "[No source location available for this error]"
+                file_history = ""
+
             diagnosis = diagnose(error, code_snippet, file_history)
 
             results.append({
                 "error_type": error["error_type"],
                 "message": error["message"],
-                "file": error["file"],
-                "line_number": error["line_number"],
+                "file": error.get("file") or "unknown",
+                "line_number": error.get("line_number") or 0,
                 "function": error.get("function"),
                 "code_snippet": code_snippet,
                 "root_cause": diagnosis.get("root_cause"),
