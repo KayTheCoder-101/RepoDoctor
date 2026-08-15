@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "backend/llm_agent.py", line 31, in diagnose
+    response = client.chat.completions.create(
+KeyError: 'choices'
+EOF
