@@ -47,7 +47,7 @@ def extract_generic_errors(log_text: str) -> list[dict]:
     errors = []
 
     pattern = re.compile(
-        r'^.*?\b(ERROR|CRITICAL|FATAL)\b.*?[:\-]\s*(.+)$',
+        r'^.*?\b(ERROR|CRITICAL|FATAL)\b\s*(?:\[[^\]]*\])?\s*[:\-]?\s*(.+)$',
         re.IGNORECASE | re.MULTILINE
     )
 
