@@ -19,11 +19,17 @@ st.markdown("""
         background-color: #0B0D12;
     }
 
-    #MainMenu, footer, header {visibility: hidden;}
+    #MainMenu, footer, header {display: none !important;}
     .block-container {
         padding-top: 2.5rem;
         padding-bottom: 3rem;
         max-width: 880px;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+    [data-testid="stAppViewContainer"] {
+        display: flex;
+        justify-content: center;
     }
 
     /* ---------- Header ---------- */
@@ -322,11 +328,26 @@ st.markdown("""
     /* Hide empty Streamlit layout wrapper boxes */
     div[data-testid="stVerticalBlockBorderWrapper"]:empty,
     div[data-testid="element-container"]:empty,
-    div[data-testid="stMarkdownContainer"]:empty {
+    div[data-testid="stMarkdownContainer"]:empty,
+    div[data-testid="stForm"]:empty,
+    div[data-testid="stElementContainer"]:empty {
         display: none !important;
     }
-    div[data-testid="stVerticalBlock"] > div:empty {
+    div[data-testid="stVerticalBlock"] > div:empty,
+    div[data-testid="stHorizontalBlock"] > div:empty {
         display: none !important;
+    }
+    div[data-testid="stElementContainer"]:has(> div:empty:only-child) {
+        display: none !important;
+    }
+
+    /* Style native Streamlit bordered containers as our cards */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        background-color: #11141B !important;
+        border: 1px solid #252A35 !important;
+        border-radius: 14px !important;
+        padding: 8px 16px !important;
+        margin-bottom: 20px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -359,15 +380,12 @@ st.markdown(
 # ---------------------------------------------------------------------------
 # INPUT WORKSPACE
 # ---------------------------------------------------------------------------
-st.markdown('<div class="rd-card">', unsafe_allow_html=True)
-st.markdown('<div class="rd-card-title">Start a diagnosis</div>', unsafe_allow_html=True)
-
-with st.form("diagnose_form"):
-    repo_url = st.text_input("Repository URL", placeholder="https://github.com/username/repository")
-    log_file = st.file_uploader("Error / Log File", type=["log", "txt"])
-    submitted = st.form_submit_button("✦ Diagnose Repository")
-
-st.markdown('</div>', unsafe_allow_html=True)
+with st.container(border=True):
+    st.markdown('<div class="rd-card-title">Start a diagnosis</div>', unsafe_allow_html=True)
+    with st.form("diagnose_form"):
+        repo_url = st.text_input("Repository URL", placeholder="https://github.com/username/repository")
+        log_file = st.file_uploader("Error / Log File", type=["log", "txt"])
+        submitted = st.form_submit_button("✦ Diagnose Repository")
 
 data = None
 error_occurred = False
