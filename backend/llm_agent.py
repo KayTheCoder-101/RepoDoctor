@@ -80,7 +80,7 @@ ERRORS FOUND:
 
 Identify any errors that likely share the SAME underlying root cause (e.g., one bug causing multiple downstream failures). Only group errors if you're genuinely confident they're connected — don't force groupings.
 
-Respond ONLY with valid JSON, no other text, in this exact format:
+Respond ONLY with valid JSON, no other text, in this exact format:  |\
 {{"groups": [{{"error_indices": [0, 2], "shared_cause": "one sentence explaining the shared root cause"}}], "summary": "one sentence overall summary of the error batch, or empty string if errors are unrelated"}}
 
 If no errors are related, return {{"groups": [], "summary": ""}}.
@@ -106,7 +106,7 @@ If no errors are related, return {{"groups": [], "summary": ""}}.
         return {"groups": [], "summary": ""}
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
     sample_error = {
         "error_type": "ZeroDivisionError",
         "message": "division by zero",

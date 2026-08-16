@@ -17,7 +17,7 @@ def extract_errors(log_text: str) -> list[dict]:
         file_lines = re.findall(r'File "(.+?)", line (\d+), in (\S+)', block)
 
         # Find the final error line, e.g. "ValueError: something went wrong"
-        error_match = re.search(r'\n(\w+(?:Error|Exception)): (.+)', block)
+        error_match = re.search(r'\n([\w.]+(?:Error|Exception)): (.+)', block)
 
         if file_lines and error_match:
             last_file, last_line, last_func = file_lines[-1]
