@@ -3,6 +3,7 @@
 **AI-powered repository debugging.** Paste a GitHub repo and a log file — RepoDoctor traces each error back to the actual line of code, explains what went wrong, and suggests a fix.
 
 **Live demo:** [repodoctor.streamlit.app](https://repodoctor.streamlit.app/)
+**Video walkthrough:** [add your demo video link here]
 
 Built for the [Pixel Forge AI Hackathon](https://pixel-forge-ai-hackathon-08.devpost.com/).
 
@@ -48,7 +49,7 @@ Everything runs as a **single Streamlit process** — no separate backend server
 
 ## Features
 
-- **Traceback + generic log parsing** — handles Python tracebacks and plain `ERROR:` / `CRITICAL:` log lines in the same file
+- **Traceback + generic log parsing** — handles Python tracebacks and plain `ERROR:` / `CRITICAL:` log lines in the same file, including fully-qualified error types like `sqlalchemy.exc.OperationalError`
 - **Real code context** — clones the actual repo and pulls the exact lines around each error, not a guess
 - **Git history awareness** — checks recent commits on the affected file and factors that into the diagnosis
 - **Severity ranking** — every error is scored critical / high / medium / low, with filtering in the UI
@@ -56,6 +57,18 @@ Everything runs as a **single Streamlit process** — no separate backend server
 - **Honest confidence signaling** — if the source file can't be located, RepoDoctor says so explicitly instead of guessing silently
 - **Before/after diff suggestions** — each error gets a proposed one-line fix, shown as a diff
 - **Clean, dark, dashboard-style UI** — built entirely in native Streamlit + custom CSS, no separate frontend framework
+
+## Tested on a real, unfamiliar repo
+
+RepoDoctor was validated against a completely separate project it had never seen before — a FastAPI + PostgreSQL log ingestion service. Given only a `sqlalchemy.exc.OperationalError` traceback, it:
+
+- correctly parsed the dotted, fully-qualified error type
+- cloned the real repo and pulled the actual surrounding code (`ingestion/main.py`)
+- referenced real recent commits touching the database config
+- correctly rated the issue **CRITICAL**
+- suggested a specific, accurate fix (verify `DATABASE_URL`, confirm the DB server is reachable)
+
+This confirms the diagnosis is grounded in the real codebase, not a generic guess — it generalizes beyond its own source.
 
 ## Tech stack
 
@@ -69,17 +82,26 @@ Everything runs as a **single Streamlit process** — no separate backend server
 
 ## Project structure
 
-RepoDoctor/
-├── backend/
-│ ├── log_parser.py # traceback + generic error extraction
-│ ├── repo_handler.py # clone/cleanup, git history lookup
-│ ├── code_matcher.py # pulls code context around a line
-│ └── llm_agent.py # diagnosis + correlation prompts
-├── frontend/
-│ └── app.py # Streamlit UI, calls backend directly
-├── requirements.txt
-└── LICENSE
+    RepoDoctor/
+    ├── backend/
+    │   ├── __init__.py
+    │   ├── log_parser.py       # traceback + generic error extraction
+    │   ├── repo_handler.py     # clone/cleanup, git history lookup
+    │   ├── code_matcher.py     # pulls code context around a line
+    │   └── llm_agent.py        # diagnosis + correlation prompts
+    ├── frontend/
+    │   └── app.py              # Streamlit UI, calls backend functions directly
+    ├── requirements.txt
+    ├── LICENSE
+    └── README.md
 
+**Key modules:**
+
+- `log_parser.py` — parses raw log text into structured errors, using two strategies: full Python tracebacks (`extract_errors`) and single-line `ERROR`/`CRITICAL`/`FATAL` messages (`extract_generic_errors`)
+- `repo_handler.py` — clones the target GitHub repo into a temp directory, cleans it up afterward, and pulls recent git commit history for a given file
+- `code_matcher.py` — given a file path and line number, extracts the surrounding code with the failing line clearly marked
+- `llm_agent.py` — builds the diagnosis prompt (error + code + git history) and the cross-error correlation prompt, calls OpenAI, and parses the structured JSON response
+- `frontend/app.py` — the entire UI: input form, loading states, metrics dashboard, severity-ranked error cards, and diff view, all calling the backend modules directly in-process
 
 ## Run it locally
 
